@@ -1,0 +1,59 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./certs:/etc/nginx/certs
+      - ./forbi_old:/var/www/forbi_old
+      - ./forbi_atual:/var/www/forbi_atual
+      - ./forbi_dev:/var/www/forbi_dev
+      - ./forbi_stage:/var/www/forbi_stage
+      - ./forbi_prod:/var/www/forbi_prod
+    depends_on:
+      - php
+    networks:
+      - app-network
+
+  php:
+    build:
+      context: ./php
+    container_name: php
+    volumes:
+      - ./forbi_old:/var/www/forbi_old
+      - ./forbi_atual:/var/www/forbi_atual
+      - ./forbi_dev:/var/www/forbi_dev
+      - ./forbi_stage:/var/www/forbi_stage
+      - ./forbi_prod:/var/www/forbi_prod
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
